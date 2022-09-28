@@ -1,0 +1,208 @@
+---
+title: "problemSet_2"
+author: "Tianjian Xie"
+date: "2022-09-22"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm","tidyquant","tidyverse","equisse","dplyr")
+```
+
+## Fuel Economy Part1
+
+1.  Do an analysis of Fuel economy over the 40 year span 1984 through
+    2023, inclusive. You may want to do an analysis by type of fuel
+    which will ignore hybrids and electric vehicles for most the the
+    years under analysis. 
+
+```{r Vehicles1}
+vehicles <- read.csv("C:/Users/JasonXie/Desktop/TianjianXie/BU/MSSP/MA615_Data Science in R/HW/Set2/vehicles.csv")
+del <- c()
+for(i in 1:length(vehicles$fuelType)){
+  if(grepl('Electricity',vehicles$fuelType[i])){
+    del <- c(del,i)
+  }
+}
+vehicles <- vehicles[-del,]
+unique(vehicles$fuelType)
+table(vehicles$fuelType)
+```
+
+## Fuel Economy Part2
+
+2.  Now, examine vehicle makers. Which ones have made the most progress?
+    Make at least two plots that address the questions above. As you do
+    your work, you may make many plots. If you include plots in addition
+    to the two that described above, make sure that they address
+    different issues and are not simply intermediate steps you took as
+    you made the to plots you're submitting for questions 1 and 2.
+    
+```{r Vehicles2}
+vehicles2 <- read.csv("C:/Users/JasonXie/Desktop/TianjianXie/BU/MSSP/MA615_Data Science in R/HW/Set2/vehicles.csv")
+#Find which car maker has large sample
+table(vehicles2$make)
+#Select Ford(3644 Samples),Chevrolet(4330 Samples), and Dodge(2659 Samples) to make comparison.
+Fordtable <- vehicles2[vehicles2$make == "Ford", ]
+Chevrolettable <- vehicles2[vehicles2$make == "Chevrolet", ]
+Dodgetable <- vehicles2[vehicles2$make == "Dodge", ]
+#To explain what does "progress" mean, I will choose barrels08(annual petroleum consumption in barrels for fuelType1 (1)), barrelsA08(annual petroleum consumption in barrels for fuelType2 (1)) as year going
+plotFord <- ggplot(Fordtable) +
+  aes(x = year, y = barrels08 + barrelsA08) +
+  geom_point(shape = "circle", size = 1.5, colour = "#112446") +
+  geom_smooth(span = 0.75)
+  labs(
+    x = "Year",
+    y = "Barrels",
+    title = "Ford Cars' Annual Petroleum Consumption in Barrels",
+    subtitle = "1984-2023"
+  ) +
+  theme_minimal()
+  plotFord
+plotChevrolet <- ggplot(Chevrolettable) +
+  aes(x = year, y = barrels08 + barrelsA08) +
+  geom_point(shape = "circle", size = 1.5, colour = "#112446") +
+  geom_smooth(span = 0.75)
+  labs(
+    x = "Year",
+    y = "Barrels",
+    title = "Chevrolet Cars' Annual Petroleum Consumption in Barrels",
+    subtitle = "1984-2023"
+  ) +
+  theme_minimal()
+  plotChevrolet
+plotDodge <- ggplot(Dodgetable) +
+  aes(x = year, y = barrels08 + barrelsA08) +
+  geom_point(shape = "circle", size = 1.5, colour = "#112446") +
+  geom_smooth(span = 0.75)
+  labs(
+    x = "Year",
+    y = "Barrels",
+    title = "Dodge Cars' Annual Petroleum Consumption in Barrels",
+    subtitle = "1984-2023"
+  ) +
+  theme_minimal()
+  plotDodge
+#From the graph we can see cars made by Ford have the largest progress on decrease the consumption of petroleum
+```
+
+## NASDAQ Composite
+
+The Nasdaq Composite (ticker symbol \^IXIC) is a stock market index that
+includes almost all stocks listed on the Nasdaq stock exchange. Along
+with the Dow Jones Industrial Average and S&P 500, it is one of the
+three most-followed stock market indices in the United States. Your
+mission is using ggplot to create a Candlestick chart with the Nasdaq
+Composite data from September 20, 2021 to September 20, 2022, using file
+IXIC21-22.csv. Be aware of the following when you create your chart: •
+Make sure the X-axis is Date and the Y-axis is Adjust Close. • Include
+an appropriate title with your graph. • Make sure your data is clean
+before you create the plot. • The format for X label will be month-year
+or year-month eg, Jul-2022, 07-2022, 2022-07 • You might need to use
+tidyquant package to create this plot. • In a sentence or two, what does
+this plot show?
+
+```{r NASDAQ}
+NASDAQdata <- read.csv("C:/Users/JasonXie/Desktop/TianjianXie/BU/MSSP/MA615_Data Science in R/HW/Set2/IXIC21-22.csv")
+NASDAQdata$Date <- as.Date(NASDAQdata$Date)
+ggplot(data = NASDAQdata, aes(x = Date, y = Adj.Close)) +
+    geom_candlestick(aes(open = Open, high = High, low = Low, close = Close),colour_up = "darkgreen",colour_down = "red",fill_up = "darkgreen",fill_down = "red") +
+    labs(title = "NASDAQ", y = "Adjust Close", x = "Date") + 
+    theme_tq()
+#This shows the daily changing of Adjust Price, which means the amends closing price of stocks reflected the stocks' value after accounting for any corporate actions, of the NASDAQ, from 2021-09-21 to 2022-09-20
+```
+
+##Rural Capacity Index
+1. Create a plot that emphasizes rural capacity indexes. Choose your other variables to reflect their contribution to the rural capacity index.
+```{r RCI1}
+RCIdata <- read.csv("C:/Users/JasonXie/Desktop/TianjianXie/BU/MSSP/MA615_Data Science in R/HW/Set2/ruralCapacityData.csv")
+#1 I choose pop_total as y-axis and use per_over_25_with_bach to color the plot. This graph shows that how the total population and the percentage of the population that can fit working affects the CPI.
+ggplot(RCIdata) +
+  aes(
+    x = cap_index,
+    y = pop_total,
+    colour = per_over_25_with_bach
+  ) +
+  geom_point(shape = "square", size = 1.5) +
+  scale_color_viridis_c(option = "magma", direction = 1) +
+  labs(
+    x = "CPI",
+    y = "Total Population",
+    title = "CPI Based on Labor Force"
+  ) +
+  theme_dark()
+#The graph shows that as the population of labor force(In this case, explained as the product of the population and percentage of population over 25 with bachelor degree.) smaller, the CPI will be lower. If the population, or the percentage, or both variables are high, the CPI might also high.
+```
+
+##Rural Capacity Index
+2. Create a plot that demonstrates the relationship between the number of houses with broadband and the percent of adults, 25 and older, with bachelor degrees. Include information about the rural capacity indexes.
+```{r CPI2}
+ggplot(RCIdata) +
+  aes(
+    x = per_over_25_with_bach,
+    y = house_broadband,
+    colour = cap_index
+  ) +
+  geom_point(shape = "square", size = 1.5) +
+  scale_color_viridis_c(option = "magma", direction = 1) +
+  labs(
+    x = "Number of Houses with Broadband",
+    y = "Percentage of Population Over 25 with Bachelor Degree",
+    title = "House_broadband vs Per_over_25_with_bach",
+    subtitle = "Relationship between Population of House with Broadband and percentage of population over 25 with Bachelor degree,
+    including CPI "
+  ) +
+  theme_dark()
+```
+
+
+##Rural Capacity Index
+3. Explore different sizes of communities and their capacity indexes. Create three plots that describe communities with total population < 16000, 16000 < total population < 55000, and total population > 55000. What facets of each population subsection stand out to you, demonstrate them in your plots.
+```{r CPI3}
+#Total Population < 16000
+RCIdata %>%
+ filter(pop_total < 16000L) %>%
+ ggplot() +
+  aes(x = pop_total, y = cap_index) +
+  geom_point(shape = "square", size = 2L, colour = "#112446") +
+  geom_smooth(span = 0.75) +
+  labs(
+    x = "SmallPop",
+    y = "CPI",
+    title = "CPI vs. Small Population"
+  ) +
+  theme_minimal()
+
+#Total Population between 16000 and 55000
+RCIdata %>%
+ filter(pop_total > 16000L & pop_total < 55000L) %>%
+ ggplot() +
+  aes(x = pop_total, y = cap_index) +
+  geom_point(shape = "square", size = 2L, colour = "#112446") +
+  geom_smooth(span = 0.75) +
+  labs(
+    x = "MediumPop",
+    y = "CPI",
+    title = "CPI vs. Medium Population"
+  ) +
+  theme_minimal()
+
+#Total Population > 55000
+RCIdata %>%
+ filter(pop_total > 55000L) %>%
+ ggplot() +
+  aes(x = pop_total, y = cap_index) +
+  geom_point(shape = "square", size = 2L, colour = "#112446") +
+  geom_smooth(span = 0.75) +
+  labs(
+    x = "LargePop",
+    y = "CPI",
+    title = "CPI vs. Large Population"
+  ) +
+  theme_minimal()
+
+```
